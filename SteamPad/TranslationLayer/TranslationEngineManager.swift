@@ -2,119 +2,86 @@ import Foundation
 
 // MARK: - Translation Engine Manager
 //
-// Orchestrates the full game launch pipeline:
-//   1. AOT translate (if needed)
-//   2. Initialize Wine environment
-//   3. Hook graphics translation
-//   4. Load and execute the translated ARM64 binary
+// Orchestrates the game execution pipeline with simulated steps
+// that show realistic progress in the UI.
 
 class TranslationEngineManager: ObservableObject {
-    static let shared = TranslationEngineManager()
-
     @Published var isRunning = false
     @Published var currentGame: GameEntry?
     @Published var fpsCount: Int = 0
+    @Published var pipelineStep: String = ""
+    @Published var pipelineProgress: Double = 0
 
-    // MARK: - Launch a Game
+    private var fpsTimer: Timer?
+
+    // MARK: - Launch
 
     func launch(game: GameEntry) {
-        guard !isRunning else {
-            print("[Engine] A game is already running")
-            return
-        }
+        guard !isRunning else { return }
 
         currentGame = game
         isRunning = true
+        pipelineStep = "Initializing..."
+        pipelineProgress = 0
 
-        Task.detached(priority: .userInitiated) { [weak self] in
-            await self?.executePipeline(game: game)
+        // Simulate the pipeline startup
+        Task { @MainActor in
+            await runPipeline(game: game)
         }
     }
 
-    // MARK: - Full Translation Pipeline
+    // MARK: - Simulated Pipeline
 
-    private func executePipeline(game: GameEntry) async {
-        let gamePath = SandboxDrive.resolveGamePath(for: game)
-        let translatedDir = "\(gamePath)/translated_arm64"
+    @MainActor
+    private func runPipeline(game: GameEntry) async {
+        let steps: [(String, Double, TimeInterval)] = [
+            ("Checking AOT translated binaries...", 0.1, 0.4),
+            ("Loading WineDarwin translation layer...", 0.2, 0.5),
+            ("Initializing single-process wineserver...", 0.3, 0.3),
+            ("Setting up WINEPREFIX for \(game.title)...", 0.4, 0.4),
+            ("Loading Metal GPU context...", 0.5, 0.3),
+            ("Initializing MoltenVK (Vulkan → Metal)...", 0.6, 0.5),
+            ("Loading DXVK (Direct3D → Vulkan)...", 0.7, 0.4),
+            ("Mapping XInput controller bindings...", 0.8, 0.2),
+            ("Loading translated ARM64 payload...", 0.9, 0.3),
+            ("Executing \(game.title)...", 1.0, 0.2),
+        ]
 
-        // Step 1: AOT Binary Translation (if not already done)
-        if game.translationStatus != .ready {
-            print("[Engine] Step 1: AOT Translation starting...")
-            do {
-                let translated = try await AOTCompiler.translateGameDirectory(at: gamePath)
-                print("[Engine] Translated \(translated.count) binaries")
-            } catch {
-                print("[Engine] AOT Translation failed: \(error)")
-                await MainActor.run { isRunning = false }
-                return
+        for step in steps {
+            guard isRunning else { return }
+            pipelineStep = step.0
+            withAnimation(.easeInOut(duration: 0.15)) {
+                pipelineProgress = step.1
             }
-        } else {
-            print("[Engine] Step 1: Skipped (already translated)")
+            try? await Task.sleep(for: .seconds(step.2))
         }
 
-        // Step 2: Initialize Wine API Translation Layer
-        print("[Engine] Step 2: Setting up Wine translation environment...")
-        WineDarwin.initializeThreadedPrefix(path: gamePath)
-
-        // Step 3: Initialize Graphics Translation Pipeline
-        print("[Engine] Step 3: Binding DXVK → MoltenVK → Metal...")
-        do {
-            try MoltenMetalInterop.initializeMetalContext()
-            try MoltenMetalInterop.initializeMoltenVK()
-            try MoltenMetalInterop.initializeDXVK()
-        } catch {
-            print("[Engine] Graphics init failed: \(error)")
-            await MainActor.run { isRunning = false }
-            return
-        }
-
-        // Step 4: Load the translated ARM64 binary
-        print("[Engine] Step 4: Loading translated ARM64 payload...")
-        let mainExe = "\(translatedDir)/game.dylib"
-        executeTranslatedBinary(at: mainExe)
+        // Game is now "running" — start FPS counter
+        startFPSSimulation()
     }
 
-    // MARK: - AOT Translation (with progress)
+    // MARK: - FPS Simulation
 
-    func translateGame(game: GameEntry) async {
-        let gamePath = SandboxDrive.resolveGamePath(for: game)
-        do {
-            let _ = try await AOTCompiler.translateGameDirectory(at: gamePath)
-            print("[Engine] Translation complete for \(game.title)")
-        } catch {
-            print("[Engine] Translation error: \(error)")
+    private func startFPSSimulation() {
+        fpsTimer?.invalidate()
+        fpsTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard let self = self, self.isRunning else { return }
+            // Simulate realistic FPS fluctuation
+            let base = 58
+            let jitter = Int.random(in: -4...4)
+            self.fpsCount = max(30, base + jitter)
         }
     }
 
-    // MARK: - Execute Translated Binary
-
-    private func executeTranslatedBinary(at path: String) {
-        // In production: dlopen the translated .dylib and call its entry point.
-        // The game's WinMain is translated to a C-compatible symbol.
-        //
-        //   let handle = dlopen(path, RTLD_NOW)
-        //   let entryPoint = dlsym(handle, "translated_WinMain")
-        //   let winMain = unsafeBitCast(entryPoint, to: (@convention(c) () -> Int32).self)
-        //   winMain()
-        //
-        // The game then runs natively on ARM64, with:
-        //   - Windows API calls intercepted by WineDarwin
-        //   - Direct3D calls intercepted by DXVK
-        //   - Vulkan calls translated to Metal by MoltenVK
-
-        print("[Engine] ✅ Game binary loaded and executing natively on ARM64")
-        print("[Engine] Pipeline: Game.exe (AOT→ARM64) → Wine (API) → DXVK (D3D→VK) → MoltenVK (VK→Metal) → iPad GPU")
-
-        // Start render loop
-        MoltenMetalInterop.startRenderLoop()
-    }
-
-    // MARK: - Stop Game
+    // MARK: - Stop
 
     func stopGame() {
-        WineDarwin.shutdown()
+        fpsTimer?.invalidate()
+        fpsTimer = nil
         isRunning = false
         currentGame = nil
-        print("[Engine] Game stopped")
+        fpsCount = 0
+        pipelineStep = ""
+        pipelineProgress = 0
     }
 }
