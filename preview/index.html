@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SteamPad — UI Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#0a0a14;--bg-card:rgba(255,255,255,.03);--bg-hover:rgba(255,255,255,.07);
+  --text:#fff;--text-dim:rgba(255,255,255,.5);--text-muted:rgba(255,255,255,.3);
+  --blue:#3b7ddd;--green:#4caf50;--orange:#ff9800;--red:#e53935;
+  --accent-glow:rgba(59,125,221,.3);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-deep);color:var(--text);overflow:hidden;height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+
+/* NAV BAR */
+.nav{display:flex;align-items:center;height:52px;background:rgba(0,0,0,.5);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.04);padding:0 24px;z-index:100;position:relative}
+.nav-logo{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;letter-spacing:2px;background:linear-gradient(180deg,#fff,#a0b4e0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-logo svg{width:24px;height:24px;fill:#fff}
+.nav-tabs{display:flex;gap:2px;margin:0 auto}
+.nav-tab{padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.4);background:transparent;border-radius:6px;transition:all .2s}
+.nav-tab:hover{color:rgba(255,255,255,.6)}
+.nav-tab.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-clock{font-size:12px;font-family:'Courier New',monospace;color:var(--text-dim)}
+.nav-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-dim);cursor:pointer}
+
+/* MAIN CONTENT */
+.content{height:calc(100vh - 52px);overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;animation:fadeIn .6s ease}
+.login-logo{font-size:52px;margin-bottom:8px;animation:pulse 3s ease infinite}
+.login-title{font-size:30px;font-weight:900;letter-spacing:5px;background:linear-gradient(90deg,#fff,#a0b4e0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.login-sub{color:var(--text-dim);font-size:13px;margin-bottom:36px}
+.login-form{width:320px;display:flex;flex-direction:column;gap:14px}
+.login-input{display:flex;align-items:center;gap:10px;padding:13px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-size:14px}
+.login-input input{background:none;border:none;color:#fff;flex:1;font-size:14px;font-family:inherit;outline:none}
+.login-input input::placeholder{color:rgba(255,255,255,.3)}
+.login-btn{padding:14px;font-size:14px;font-weight:700;letter-spacing:1px;color:#fff;background:linear-gradient(90deg,#2a5caa,#1e3f7a);border-radius:10px;margin-top:4px;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 16px var(--accent-glow)}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow)}
+.login-skip{color:var(--text-muted);font-size:13px;background:none;margin-top:4px;text-align:center}
+.login-skip:hover{color:var(--text-dim)}
+.login-footer{position:absolute;bottom:20px;color:rgba(255,255,255,.2);font-size:11px}
+
+/* HOME */
+.home{padding:24px}
+.hero-carousel{position:relative;border-radius:16px;overflow:hidden;height:300px;margin-bottom:32px}
+.hero-slide{position:absolute;inset:0;display:flex;align-items:flex-end;padding:28px;transition:opacity .5s}
+.hero-slide .genre-pill{font-size:10px;font-weight:700;letter-spacing:1.5px;padding:4px 10px;background:rgba(255,255,255,.1);border-radius:4px;color:rgba(255,255,255,.6);margin-bottom:4px;display:inline-block}
+.hero-slide h2{font-size:34px;font-weight:900;margin:4px 0}
+.hero-badges{display:flex;gap:12px;align-items:center;margin:6px 0}
+.hero-play{display:inline-flex;align-items:center;gap:6px;padding:11px 28px;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(180deg,#4caf50,#2e7d32);border-radius:6px;margin-top:8px;transition:transform .15s;box-shadow:0 3px 12px rgba(76,175,80,.3)}
+.hero-play:hover{transform:scale(1.03)}
+.hero-dots{position:absolute;bottom:12px;right:20px;display:flex;gap:6px}
+.hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:background .2s}
+.hero-dot.active{background:#fff}
+
+.section-title{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-muted);margin-bottom:12px}
+.game-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;margin-bottom:28px;scrollbar-width:none}
+.game-row::-webkit-scrollbar{display:none}
+
+.game-card{flex:0 0 160px;cursor:pointer;transition:transform .15s}
+.game-card:hover{transform:translateY(-4px)}
+.game-card-art{width:160px;height:210px;border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.05)}
+.game-card-art .icon{font-size:36px;opacity:.08}
+.game-card-badge{position:absolute;bottom:8px;left:8px}
+.game-card h4{font-size:13px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-card p{font-size:11px;color:var(--text-muted)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700}
+.badge-ready{color:var(--green);background:rgba(76,175,80,.12)}
+.badge-translating{color:var(--blue);background:rgba(59,125,221,.12)}
+.badge-not{color:var(--orange);background:rgba(255,152,0,.12)}
+
+/* LIBRARY */
+.library{display:flex;height:100%}
+.lib-sidebar{width:320px;background:rgba(255,255,255,.02);border-right:1px solid rgba(255,255,255,.04);display:flex;flex-direction:column}
+.lib-search{display:flex;align-items:center;gap:10px;padding:12px;margin:16px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.06)}
+.lib-search input{background:none;border:none;color:#fff;font-size:14px;font-family:inherit;outline:none;flex:1}
+.lib-search input::placeholder{color:rgba(255,255,255,.3)}
+.lib-filters{display:flex;gap:6px;padding:0 16px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none}
+.lib-filter{padding:5px 12px;font-size:11px;font-weight:700;border-radius:14px;background:rgba(255,255,255,.04);color:var(--text-dim);transition:all .15s}
+.lib-filter.active{background:rgba(59,125,221,.3);color:#fff;border:1px solid rgba(59,125,221,.4)}
+.lib-count{padding:6px 16px;font-size:11px;color:var(--text-muted)}
+.lib-list{flex:1;overflow-y:auto}
+.lib-item{display:flex;align-items:center;gap:12px;padding:8px 16px;cursor:pointer;transition:background .1s;position:relative}
+.lib-item:hover{background:rgba(255,255,255,.04)}
+.lib-item.selected{background:rgba(255,255,255,.07)}
+.lib-item.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
+.lib-thumb{width:38px;height:50px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.3}
+.lib-item h4{font-size:13px;font-weight:600}
+.lib-item p{font-size:11px;color:var(--text-muted)}
+.lib-dot{width:7px;height:7px;border-radius:50%;margin-left:auto;flex-shrink:0}
+
+.lib-detail{flex:1;overflow-y:auto;padding:24px}
+.lib-detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted)}
+.lib-detail-empty .icon{font-size:60px;opacity:.06;margin-bottom:16px}
+.detail-hero{height:220px;border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:flex-end;border:1px solid rgba(255,255,255,.05);margin-bottom:20px;position:relative;overflow:hidden}
+.detail-hero .genre{font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.5)}
+.detail-hero h2{font-size:28px;font-weight:900;margin-top:4px}
+.detail-actions{display:flex;gap:10px;margin-bottom:20px}
+.detail-actions button{flex:1;padding:13px;font-size:14px;font-weight:700;border-radius:8px;color:#fff;transition:transform .15s}
+.btn-play{background:linear-gradient(180deg,#4caf50,#2e7d32);box-shadow:0 3px 10px rgba(76,175,80,.2)}
+.btn-translate{background:rgba(59,125,221,.5)}
+.btn-install{background:rgba(59,125,221,.35)}
+.detail-actions button:hover{transform:translateY(-1px)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.info-cell{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);border-radius:8px;border:1px solid rgba(255,255,255,.04)}
+.info-cell .label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-muted)}
+.info-cell .value{font-size:13px;font-weight:600}
+.pipeline-box{padding:16px;background:rgba(255,255,255,.02);border-radius:10px;border:1px solid rgba(255,255,255,.04)}
+.pipeline-box h5{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:10px}
+.pipe-step{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:12px}
+.pipe-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.pipe-done{background:rgba(76,175,80,.2);color:var(--green)}
+.pipe-pending{background:rgba(255,255,255,.05);color:var(--text-muted)}
+.pipe-label{font-weight:600}
+.pipe-sub{color:var(--text-muted);font-size:10px}
+
+/* DOWNLOADS */
+.downloads{padding:24px}
+.dl-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:var(--text-muted)}
+.dl-empty .check{width:80px;height:80px;border-radius:50%;background:rgba(76,175,80,.08);display:flex;align-items:center;justify-content:center;font-size:40px;color:rgba(76,175,80,.4);margin-bottom:16px}
+.dl-section-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:1px;margin:16px 0 10px}
+.dl-card{padding:16px;background:var(--bg-card);border-radius:12px;border:1px solid rgba(255,255,255,.05);margin-bottom:10px}
+.dl-card-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.dl-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.dl-card h4{font-size:14px;font-weight:600}
+.dl-card .sub{font-size:11px;color:var(--text-dim)}
+.dl-stats{margin-left:auto;text-align:right}
+.dl-stats .pct{font-size:15px;font-weight:700;font-family:'Courier New',monospace}
+.dl-stats .speed{font-size:10px;font-family:'Courier New',monospace;color:var(--text-dim)}
+.dl-bar{height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.dl-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+
+/* SETTINGS */
+.settings{padding:24px;max-width:700px}
+.settings-section{margin-bottom:20px}
+.settings-section-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:10px}
+.settings-box{padding:16px;background:var(--bg-card);border-radius:12px;border:1px solid rgba(255,255,255,.04)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.settings-row .lbl{font-size:14px}
+.settings-row .desc{font-size:11px;color:var(--text-muted)}
+.settings-row+.settings-row{border-top:1px solid rgba(255,255,255,.04)}
+.toggle{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--blue)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:23px}
+.settings-info{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.settings-info .k{color:var(--text-dim)}
+.settings-info .v{font-family:'Courier New',monospace;font-size:12px;color:rgba(255,255,255,.7)}
+
+/* IN-GAME */
+.ingame{height:100vh;position:relative;display:flex;flex-direction:column}
+.ingame-surface{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.ingame-grid{position:absolute;inset:0;opacity:.03;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:20px 20px}
+.ingame-center{text-align:center;color:rgba(255,255,255,.06)}
+.ingame-center .icon{font-size:40px}
+.hud{position:absolute;top:16px;left:0;right:0;display:flex;align-items:flex-start;padding:0 20px;gap:8px}
+.hud-pill{padding:6px 10px;background:rgba(0,0,0,.7);border-radius:6px;font-size:11px;display:flex;align-items:center;gap:5px}
+.fps-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.fps-val{font-size:14px;font-weight:900;font-family:'Courier New',monospace;color:var(--green)}
+.hud-spacer{flex:1}
+.hud-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);border-radius:6px;font-size:14px;color:#fff}
+.hud-btn.exit{color:var(--red)}
+.vpad{position:absolute;bottom:30px;left:0;right:0;display:flex;justify-content:space-between;padding:0 50px;pointer-events:none}
+.stick{width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center}
+.stick-inner{width:45px;height:45px;border-radius:50%;background:rgba(255,255,255,.08)}
+.face-btns{display:flex;flex-direction:column;align-items:center;gap:6px}
+.face-row{display:flex;gap:22px}
+.face-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:rgba(255,255,255,.8)}
+
+/* LOADING PIPELINE */
+.pipeline-loading{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+.pipeline-loading h2{font-size:28px;font-weight:900;margin-bottom:24px}
+.pipeline-step{display:flex;align-items:center;gap:8px;color:var(--blue);font-size:13px;font-family:'Courier New',monospace;margin-bottom:12px}
+.pipeline-bar{width:400px;height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:8px}
+.pipeline-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),rgba(59,125,221,.6));transition:width .3s}
+.pipeline-pct{font-size:12px;font-weight:700;font-family:'Courier New',monospace;color:var(--text-dim);margin-bottom:20px}
+.pipeline-steps{display:flex;flex-direction:column;gap:6px}
+
+/* SCREEN TRANSITIONS */
+.screen{display:none;height:100%}
+.screen.active{display:flex;flex-direction:column;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{animation:spin 1s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="screen active">
+<div class="login-screen">
+  <div class="login-logo">🎮</div>
+  <div class="login-title">STEAMPAD</div>
+  <div class="login-sub">PC Gaming on iPad — Pure Translation</div>
+  <div class="login-form">
+    <div class="login-input"><span>👤</span><input type="text" placeholder="Steam Username"></div>
+    <div class="login-input"><span>🔒</span><input type="password" placeholder="Password"></div>
+    <button class="login-btn" onclick="doLogin()">SIGN IN</button>
+    <button class="login-skip" onclick="navigateTo('dashboard')">Continue without login (Demo Mode)</button>
+  </div>
+  <div class="login-footer">SteamPad v0.1.0 • ARM64 Translation Layer</div>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="screen-dashboard" class="screen">
+<div class="nav">
+  <div class="nav-logo"><span>🎮</span> STEAMPAD</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('home',this)">🏠 HOME</button>
+    <button class="nav-tab" onclick="switchTab('library',this)">📚 LIBRARY</button>
+    <button class="nav-tab" onclick="switchTab('downloads',this)">⬇️ DOWNLOADS</button>
+    <button class="nav-tab" onclick="switchTab('settings',this)">⚙️ SETTINGS</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-clock" id="clock"></span>
+    <div class="nav-avatar" onclick="navigateTo('login')">👤</div>
+  </div>
+</div>
+<div class="content">
+
+<!-- HOME TAB -->
+<div id="tab-home" class="home" style="display:block">
+  <div class="hero-carousel" id="hero"></div>
+
+  <div class="section-title">RECENT GAMES</div>
+  <div class="game-row" id="recent-row"></div>
+
+  <div class="section-title">READY TO PLAY</div>
+  <div class="game-row" id="ready-row"></div>
+
+  <div class="section-title">ALL INSTALLED</div>
+  <div class="game-row" id="installed-row"></div>
+</div>
+
+<!-- LIBRARY TAB -->
+<div id="tab-library" class="library" style="display:none">
+  <div class="lib-sidebar">
+    <div class="lib-search"><span>🔍</span><input type="text" placeholder="Search library..." oninput="filterLibrary(this.value)"></div>
+    <div class="lib-filters">
+      <button class="lib-filter active" onclick="setFilter('all',this)">All</button>
+      <button class="lib-filter" onclick="setFilter('translated',this)">Translated</button>
+      <button class="lib-filter" onclick="setFilter('installed',this)">Installed</button>
+    </div>
+    <div class="lib-count" id="lib-count"></div>
+    <div class="lib-list" id="lib-list"></div>
+  </div>
+  <div class="lib-detail" id="lib-detail">
+    <div class="lib-detail-empty"><div class="icon">🎮</div><div>Select a game</div><div style="font-size:13px;margin-top:4px;color:rgba(255,255,255,.2)">Choose from your library to view details</div></div>
+  </div>
+</div>
+
+<!-- DOWNLOADS TAB -->
+<div id="tab-downloads" class="downloads" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+    <span class="section-title" style="margin:0">DOWNLOADS & TRANSLATIONS</span>
+    <span id="dl-active-count" style="font-size:12px;font-family:monospace;color:var(--blue)"></span>
+  </div>
+  <div id="dl-content"></div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div id="tab-settings" class="settings" style="display:none">
+  <div class="section-title" style="margin-bottom:16px">SETTINGS</div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">⚡ TRANSLATION ENGINE</div>
+    <div class="settings-box">
+      <div class="settings-row"><div><div class="lbl">DXVK (Direct3D → Vulkan → Metal)</div><div class="desc">Translates D3D9/11 draw calls</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="settings-row"><div><div class="lbl">FSync (Frame Synchronization)</div><div class="desc">Reduces stutter during rendering</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="settings-row"><div><div class="lbl">ASTC Texture Compression</div><div class="desc">Converts textures to iPad GPU format</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">📊 PERFORMANCE</div>
+    <div class="settings-box">
+      <div class="settings-row"><div><div class="lbl">Memory Limit</div></div><div style="font-family:monospace;color:var(--blue);font-weight:700">3072 MB</div></div>
+      <div class="settings-row"><div><div class="lbl">Target FPS</div></div><div style="font-family:monospace;color:var(--green);font-weight:700">60 FPS</div></div>
+      <div class="settings-row"><div><div class="lbl">Wine Debug Level</div></div><div style="font-family:monospace;color:var(--text-dim)">warn</div></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">ℹ️ SYSTEM INFO</div>
+    <div class="settings-box">
+      <div class="settings-info"><span class="k">Runtime</span><span class="v">WineDarwin 9.0 (SingleProcess)</span></div>
+      <div class="settings-info"><span class="k">Translator</span><span class="v">FEX-AOT Static ARM64</span></div>
+      <div class="settings-info"><span class="k">Graphics</span><span class="v">DXVK 2.4 → MoltenVK 1.2 → Metal 3</span></div>
+      <div class="settings-info"><span class="k">Version</span><span class="v">SteamPad v0.1.0 (build 1)</span></div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- IN-GAME SCREEN -->
+<div id="screen-ingame" class="screen">
+<div class="ingame">
+  <div class="ingame-surface" id="game-surface">
+    <div class="ingame-grid"></div>
+    <div class="ingame-center"><div class="icon">🎮</div><div style="margin-top:8px;font-size:13px" id="game-running-text"></div><div style="font-size:11px;margin-top:4px">Double-click to toggle HUD</div></div>
+  </div>
+  <div class="hud" id="hud">
+    <div class="hud-pill"><div class="fps-dot"></div><span class="fps-val" id="fps-val">60</span><span style="font-size:10px;color:gray">FPS</span></div>
+    <div class="hud-pill" id="hud-game-title" style="color:rgba(255,255,255,.5)"></div>
+    <div class="hud-spacer"></div>
+    <button class="hud-btn" onclick="alert('Quick Settings')">⚙️</button>
+    <button class="hud-btn exit" onclick="exitGame()">✕</button>
+  </div>
+  <div class="vpad" id="vpad">
+    <div class="stick"><div class="stick-inner"></div></div>
+    <div class="face-btns">
+      <div class="face-btn" style="background:rgba(255,235,59,.25);border:1.5px solid rgba(255,235,59,.35)">Y</div>
+      <div class="face-row">
+        <div class="face-btn" style="background:rgba(33,150,243,.25);border:1.5px solid rgba(33,150,243,.35)">X</div>
+        <div class="face-btn" style="background:rgba(244,67,54,.25);border:1.5px solid rgba(244,67,54,.35)">B</div>
+      </div>
+      <div class="face-btn" style="background:rgba(76,175,80,.25);border:1.5px solid rgba(76,175,80,.35)">A</div>
+    </div>
+  </div>
+  <div class="pipeline-loading" id="pipeline-loading">
+    <h2 id="pipeline-game-title"></h2>
+    <div class="pipeline-step"><span class="spinner">⚙️</span> <span id="pipeline-step-text">Initializing...</span></div>
+    <div class="pipeline-bar"><div class="pipeline-bar-fill" id="pipeline-bar"></div></div>
+    <div class="pipeline-pct" id="pipeline-pct">0%</div>
+    <div class="pipeline-steps" id="pipeline-steps"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// GAME DATA
+const games=[
+  {id:'1',title:'Dota 2',genre:'MOBA',color:'#cc2626',installed:true,status:'ready',size:'35 GB'},
+  {id:'2',title:'Counter-Strike 2',genre:'FPS',color:'#e68c1a',installed:true,status:'ready',size:'28 GB'},
+  {id:'3',title:'Elden Ring',genre:'Action RPG',color:'#c0a63f',installed:true,status:'translating',size:'50 GB'},
+  {id:'4',title:'Cyberpunk 2077',genre:'RPG',color:'#f2d90a',installed:false,status:'not',size:'70 GB'},
+  {id:'5',title:'Hades',genre:'Roguelike',color:'#d9331e',installed:true,status:'ready',size:'15 GB'},
+  {id:'6',title:'Terraria',genre:'Sandbox',color:'#33b34d',installed:true,status:'ready',size:'500 MB'},
+  {id:'7',title:'Portal',genre:'Puzzle',color:'#3373d9',installed:true,status:'ready',size:'4 GB'},
+  {id:'8',title:'Half-Life 2',genre:'FPS',color:'#f28c0a',installed:true,status:'ready',size:'6.5 GB'},
+  {id:'9',title:'The Witcher 3',genre:'RPG',color:'#265926',installed:false,status:'not',size:'50 GB'},
+  {id:'10',title:'Stardew Valley',genre:'Simulation',color:'#66a633',installed:true,status:'ready',size:'500 MB'},
+];
+const featured=[games[0],games[1],games[4]];
+let currentFilter='all',selectedGame=null,heroIdx=0,fpsInterval=null;
+
+// NAV
+function navigateTo(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  if(screen==='dashboard')renderDashboard();
+}
+function switchTab(tab,btn){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['home','library','downloads','settings'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  });
+  if(tab==='library'){renderLibrary();document.getElementById('tab-library').style.display='flex'}
+  if(tab==='downloads')renderDownloads();
+}
+
+// CLOCK
+setInterval(()=>{const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})},1000);
+
+// BADGE
+function badge(status){
+  const m={ready:['✓ Ready','badge-ready'],translating:['⚙ Translating','badge-translating'],not:['○ Not Translated','badge-not']};
+  const[l,c]=m[status]||m.not;
+  return `<span class="badge ${c}">${l}</span>`;
+}
+
+// HERO
+function renderHero(){
+  const h=document.getElementById('hero');
+  let html='';
+  featured.forEach((g,i)=>{
+    html+=`<div class="hero-slide" style="background:linear-gradient(to bottom left,${g.color}cc,${g.color}66,#000e);opacity:${i===heroIdx?1:0}">
+      <div><div class="genre-pill">${g.genre.toUpperCase()}</div><h2>${g.title}</h2>
+      <div class="hero-badges">${badge(g.status)}<span style="font-size:12px;font-family:monospace;color:rgba(255,255,255,.4)">${g.size}</span></div>
+      ${g.status==='ready'?`<button class="hero-play" onclick="launchGame('${g.id}')">▶ PLAY</button>`:''}
+      </div></div>`;
+  });
+  html+='<div class="hero-dots">'+featured.map((_,i)=>`<div class="hero-dot${i===heroIdx?' active':''}" onclick="heroIdx=${i};renderHero()"></div>`).join('')+'</div>';
+  h.innerHTML=html;
+}
+setInterval(()=>{heroIdx=(heroIdx+1)%featured.length;renderHero()},4000);
+
+// CARDS
+function card(g){
+  return `<div class="game-card" onclick="${g.status==='ready'?`launchGame('${g.id}')`:''}">
+    <div class="game-card-art" style="background:linear-gradient(135deg,${g.color}99,${g.color}33,#000)">
+      <span class="icon">🎮</span>
+      <div class="game-card-badge">${badge(g.status)}</div>
+    </div>
+    <h4>${g.title}</h4><p>${g.genre}</p></div>`;
+}
+function renderRows(){
+  document.getElementById('recent-row').innerHTML=games.slice(0,5).map(card).join('');
+  document.getElementById('ready-row').innerHTML=games.filter(g=>g.status==='ready').map(card).join('');
+  document.getElementById('installed-row').innerHTML=games.filter(g=>g.installed).map(card).join('');
+}
+
+// LIBRARY
+function renderLibrary(){
+  let list=games;
+  if(currentFilter==='translated')list=games.filter(g=>g.status==='ready');
+  else if(currentFilter==='installed')list=games.filter(g=>g.installed);
+  document.getElementById('lib-count').textContent=list.length+' games';
+  const el=document.getElementById('lib-list');
+  el.innerHTML=list.map(g=>`<div class="lib-item${selectedGame?.id===g.id?' selected':''}" onclick="selectGame('${g.id}')">
+    <div class="lib-thumb" style="background:linear-gradient(${g.color}80,${g.color}33)">🎮</div>
+    <div><h4>${g.title}</h4><p>${g.genre}</p></div>
+    <div class="lib-dot" style="background:${g.status==='ready'?'var(--green)':g.status==='translating'?'var(--blue)':'var(--orange)'}"></div>
+  </div>`).join('');
+  renderDetail();
+}
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.lib-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLibrary();
+}
+function filterLibrary(q){
+  const el=document.getElementById('lib-list');
+  el.querySelectorAll('.lib-item').forEach(item=>{
+    item.style.display=item.textContent.toLowerCase().includes(q.toLowerCase())?'flex':'none';
+  });
+}
+function selectGame(id){selectedGame=games.find(g=>g.id===id);renderLibrary()}
+function renderDetail(){
+  const d=document.getElementById('lib-detail');
+  if(!selectedGame){d.innerHTML='<div class="lib-detail-empty"><div class="icon">🎮</div><div>Select a game</div></div>';return}
+  const g=selectedGame,ready=g.status==='ready';
+  let btn='';
+  if(ready)btn=`<button class="btn-play" onclick="launchGame('${g.id}')">▶ PLAY</button>`;
+  else if(g.installed)btn=`<button class="btn-translate" onclick="startTranslation('${g.id}')">⚙ TRANSLATE TO ARM64</button>`;
+  else btn=`<button class="btn-install" onclick="startDownload('${g.id}')">⬇ INSTALL (${g.size})</button>`;
+  d.innerHTML=`
+    <div class="detail-hero" style="background:linear-gradient(to bottom left,${g.color}b3,${g.color}4d,#000)">
+      <div class="genre">${g.genre.toUpperCase()}</div><h2>${g.title}</h2></div>
+    <div class="detail-actions">${btn}</div>
+    <div class="info-grid">
+      <div class="info-cell"><div><div class="label">APP ID</div><div class="value">${g.id}</div></div></div>
+      <div class="info-cell"><div><div class="label">STATUS</div><div class="value">${g.status==='ready'?'Ready':g.status==='translating'?'Translating':'Not Translated'}</div></div></div>
+      <div class="info-cell"><div><div class="label">SIZE</div><div class="value">${g.size}</div></div></div>
+      <div class="info-cell"><div><div class="label">GENRE</div><div class="value">${g.genre}</div></div></div>
+    </div>
+    <div class="pipeline-box"><h5>TRANSLATION PIPELINE</h5>
+      ${['AOT Binary Translation|x86 PE → ARM64 Mach-O','Wine API Translation|Win32 API → Darwin/POSIX','DXVK Graphics|Direct3D → Vulkan','MoltenVK → Metal|Vulkan → Apple Metal GPU'].map((s,i)=>{
+        const[t,sub]=s.split('|');
+        return `<div class="pipe-step"><div class="pipe-dot ${ready?'pipe-done':'pipe-pending'}">${ready?'✓':(i+1)}</div><div><div class="pipe-label" style="color:${ready?'#fff':'var(--text-muted)'}">${t}</div><div class="pipe-sub">${sub}</div></div></div>`;
+      }).join('')}
+    </div>`;
+}
+
+// DOWNLOADS
+let dlTasks=[],trTasks=[];
+function startDownload(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const total=parseInt(g.size)*1000||5000;
+  dlTasks.push({id,title:g.title,downloaded:0,total,speed:0});
+  switchTab('downloads',document.querySelectorAll('.nav-tab')[2]);
+  const iv=setInterval(()=>{
+    const t=dlTasks.find(x=>x.id===id);if(!t){clearInterval(iv);return}
+    t.downloaded=Math.min(t.downloaded+Math.random()*800+200,t.total);
+    t.speed=40+Math.random()*80;
+    renderDownloads();
+    if(t.downloaded>=t.total){clearInterval(iv);dlTasks=dlTasks.filter(x=>x.id!==id);g.installed=true;renderDownloads();renderLibrary()}
+  },100);
+}
+function startTranslation(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  g.status='translating';
+  const total=80+Math.floor(Math.random()*120);
+  trTasks.push({id,title:g.title,done:0,total,file:'game.exe'});
+  switchTab('downloads',document.querySelectorAll('.nav-tab')[2]);
+  const files=['game.exe','engine.dll','d3d11.dll','xinput1_3.dll','renderer.dll','audio.dll','physics.dll','scripts.dll'];
+  const iv=setInterval(()=>{
+    const t=trTasks.find(x=>x.id===id);if(!t){clearInterval(iv);return}
+    t.done++;t.file=files[Math.floor(Math.random()*files.length)];
+    renderDownloads();
+    if(t.done>=t.total){clearInterval(iv);trTasks=trTasks.filter(x=>x.id!==id);g.status='ready';renderDownloads();renderLibrary()}
+  },80);
+}
+function renderDownloads(){
+  const c=document.getElementById('dl-content');
+  const count=dlTasks.length+trTasks.length;
+  document.getElementById('dl-active-count').textContent=count?count+' active':'';
+  if(!count){c.innerHTML='<div class="dl-empty"><div class="check">✓</div><div style="font-size:18px;font-weight:600;color:rgba(255,255,255,.7)">All caught up</div><div style="font-size:13px;margin-top:6px">No active downloads or translations.</div></div>';return}
+  let html='';
+  if(trTasks.length){
+    html+=`<div class="dl-section-title" style="color:rgba(59,125,221,.6)">⚙ AOT TRANSLATION</div>`;
+    trTasks.forEach(t=>{
+      const p=t.done/t.total;
+      html+=`<div class="dl-card"><div class="dl-card-top"><div class="dl-icon" style="background:rgba(59,125,221,.1);color:var(--blue)"><span class="spinner">⚙</span></div><div><h4>${t.title}</h4><div class="sub" style="font-family:monospace">x86 → ARM64 · ${t.file}</div></div><div class="dl-stats"><div class="pct" style="color:var(--blue)">${Math.round(p*100)}%</div><div class="speed">${t.done}/${t.total} files</div></div></div><div class="dl-bar"><div class="dl-bar-fill" style="width:${p*100}%;background:linear-gradient(90deg,var(--blue),rgba(59,125,221,.6))"></div></div></div>`;
+    });
+  }
+  if(dlTasks.length){
+    html+=`<div class="dl-section-title" style="color:rgba(76,175,80,.6)">⬇ DOWNLOADING</div>`;
+    dlTasks.forEach(t=>{
+      const p=t.downloaded/t.total;
+      html+=`<div class="dl-card"><div class="dl-card-top"><div class="dl-icon" style="background:rgba(76,175,80,.1);color:var(--green)">⬇</div><div><h4>${t.title}</h4><div class="sub">Downloading from Steam CDN...</div></div><div class="dl-stats"><div class="pct" style="color:var(--green)">${Math.round(p*100)}%</div><div class="speed">${t.speed.toFixed(1)} MB/s</div></div></div><div class="dl-bar"><div class="dl-bar-fill" style="width:${p*100}%;background:linear-gradient(90deg,var(--green),rgba(76,175,80,.6))"></div></div></div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+// GAME LAUNCH
+function launchGame(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  navigateTo('ingame');
+  document.getElementById('pipeline-game-title').textContent=g.title;
+  document.getElementById('hud-game-title').textContent=g.title;
+  document.getElementById('game-running-text').textContent=g.title+' is running';
+  document.getElementById('game-surface').style.background=`linear-gradient(135deg,${g.color}26,#000,${g.color}1a)`;
+  const loading=document.getElementById('pipeline-loading');
+  loading.style.display='flex';
+  const steps=[
+    ['Checking AOT translated binaries...',10],['Loading WineDarwin translation layer...',20],
+    ['Initializing single-process wineserver...',30],['Setting up WINEPREFIX...',40],
+    ['Loading Metal GPU context...',50],['Initializing MoltenVK (VK→Metal)...',60],
+    ['Loading DXVK (D3D→VK)...',70],['Mapping XInput controller bindings...',80],
+    ['Loading translated ARM64 payload...',90],['Executing '+g.title+'...',100]
+  ];
+  const stepNames=['game.exe → AOT → ARM64','Wine API → Win32 → Darwin','DXVK → D3D → Vulkan','MoltenVK → Vulkan → Metal'];
+  document.getElementById('pipeline-steps').innerHTML=stepNames.map((s,i)=>`<div class="pipe-step" id="pstep-${i}"><div class="pipe-dot pipe-pending">${i+1}</div><span style="font-size:12px;font-family:monospace;color:var(--text-muted)">${s}</span></div>`).join('');
+  let si=0;
+  const iv=setInterval(()=>{
+    if(si>=steps.length){clearInterval(iv);loading.style.display='none';startFPS();return}
+    const[text,pct]=steps[si];
+    document.getElementById('pipeline-step-text').textContent=text;
+    document.getElementById('pipeline-bar').style.width=pct+'%';
+    document.getElementById('pipeline-pct').textContent=pct+'%';
+    if(si>=2&&si-2<4){const el=document.getElementById('pstep-'+(si-2));if(el)el.querySelector('.pipe-dot').className='pipe-dot pipe-done',el.querySelector('.pipe-dot').textContent='✓',el.querySelector('span').style.color='#fff'}
+    si++;
+  },350);
+}
+function startFPS(){
+  if(fpsInterval)clearInterval(fpsInterval);
+  fpsInterval=setInterval(()=>{
+    const fps=54+Math.floor(Math.random()*9);
+    const el=document.getElementById('fps-val');
+    el.textContent=fps;
+    el.style.color=fps>=55?'var(--green)':fps>=40?'#ffeb3b':'var(--red)';
+  },500);
+}
+function exitGame(){
+  if(fpsInterval)clearInterval(fpsInterval);
+  navigateTo('dashboard');
+}
+
+// LOGIN
+function doLogin(){
+  const btn=document.querySelector('.login-btn');
+  btn.textContent='SIGNING IN...';
+  setTimeout(()=>{btn.textContent='SIGN IN';navigateTo('dashboard')},1200);
+}
+
+// INIT
+function renderDashboard(){renderHero();renderRows();renderLibrary();renderDownloads()}
+
+// Double-click toggle HUD
+document.addEventListener('dblclick',()=>{
+  const h=document.getElementById('hud'),v=document.getElementById('vpad');
+  if(document.getElementById('screen-ingame').classList.contains('active')){
+    const vis=h.style.display!=='none';
+    h.style.display=vis?'none':'flex';
+    v.style.display=vis?'none':'flex';
+  }
+});
+</script>
+</body>
+</html>
