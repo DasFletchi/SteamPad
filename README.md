@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Platform-iPadOS_17+-blue?style=flat-square&logo=apple" alt="Platform"/>
   <img src="https://img.shields.io/badge/Architecture-ARM64-green?style=flat-square" alt="Arch"/>
   <img src="https://img.shields.io/badge/Graphics-Metal_3-orange?style=flat-square&logo=apple" alt="Graphics"/>
+  <img src="https://img.shields.io/badge/Swift-5.9-F05138?style=flat-square&logo=swift" alt="Swift"/>
   <img src="https://img.shields.io/badge/License-GPL_3.0-purple?style=flat-square" alt="License"/>
   <img src="https://img.shields.io/badge/Sideload-AltStore-red?style=flat-square" alt="Sideload"/>
 </p>
@@ -68,16 +69,37 @@ SteamPad uses **zero emulation**. Every layer is a direct translation:
 
 ---
 
+## 🎬 Demo Flow
+
+The app ships with a **fully functional demo** — all UI actions are live and interactive:
+
+```
+Login → Dashboard → Library → Install → Translate → Play → In-Game HUD → Exit
+```
+
+| Step | What Happens |
+|------|-------------|
+| 🔑 **Login** | Animated logo, gradient form, or "Demo Mode" skip |
+| 🏠 **Dashboard** | Hero carousel, cover art cards with press animations |
+| 📚 **Library** | Sidebar search + filter pills, detail pane with pipeline visualization |
+| ⬇️ **Install** | Real-time progress bar with simulated download speed (MB/s) |
+| ⚙️ **Translate** | AOT x86→ARM64 progress bar with file counter ticking up live |
+| ▶️ **Play** | 10-step async pipeline loading screen shown sequentially |
+| 🎮 **In-Game** | FPS counter (fluctuates ~58), virtual gamepad, quick settings |
+| 👤 **User Menu** | Dropdown with game stats, sign out returns to login |
+
+---
+
 ## 🖥️ SteamOS-Inspired Interface
 
-The launcher UI is designed to feel like the **Steam Deck's Big Picture Mode** — dark, immersive, and fully controller-navigable.
+Designed to feel like the **Steam Deck's Big Picture Mode** — dark, immersive, fully controller-navigable.
 
-- 🎬 **Hero Carousel** — Featured games with gradient cover art and instant Play buttons
-- 📚 **Library Sidebar** — Searchable game list with filter pills (All / Translated / Installed)
-- 📊 **Detail Pane** — Game info, translation status, Install / Translate / Play actions
-- ⬇️ **Downloads Tab** — Real-time progress for Steam depot downloads and AOT translations
-- ⚙️ **Settings** — DXVK toggle, FSync, memory limiter, Wine debug levels
-- 🎮 **In-Game Overlay** — FPS counter, quick settings, virtual gamepad for touch
+- 🎬 **Hero Carousel** — Featured games with gradient art, genre pills, instant Play buttons
+- 📚 **Library Sidebar** — Searchable game list with filter pills and blue selection indicator
+- 📊 **Detail Pane** — Info grid, translation status, 4-step pipeline visualization
+- ⬇️ **Downloads Tab** — Animated progress bars with file counts and speeds
+- ⚙️ **Settings** — DXVK/FSync toggles, FPS target picker, memory slider, system info
+- 🎮 **In-Game Overlay** — Double-tap to toggle HUD, FPS counter, virtual gamepad, quick settings
 
 ---
 
@@ -86,40 +108,41 @@ The launcher UI is designed to feel like the **Steam Deck's Big Picture Mode** �
 ```
 SteamPad/
 ├── App/
-│   ├── SteamPadApp.swift              # @main entry, environment wiring
-│   └── RootView.swift                 # SteamOS nav bar + tab routing
+│   ├── SteamPadApp.swift              # AppState + ContentRouter (screen navigation)
+│   └── RootView.swift                 # SteamOS nav bar + user dropdown menu
 │
 ├── UI/
 │   ├── SteamOS/
-│   │   ├── HomeView.swift             # Hero carousel, game rows
-│   │   ├── LibraryGridView.swift      # Sidebar list, search, detail pane
-│   │   ├── DownloadsView.swift        # Download + translation progress
-│   │   └── SettingsView.swift         # Engine config, system info
+│   │   ├── LoginView.swift            # Animated login screen + demo mode
+│   │   ├── HomeView.swift             # Hero carousel, game card rows
+│   │   ├── LibraryGridView.swift      # Sidebar, search, detail pane + pipeline info
+│   │   ├── DownloadsView.swift        # Animated download + translation progress
+│   │   └── SettingsView.swift         # Engine config, FPS picker, system info
 │   └── Overlay/
-│       └── InGameOverlayView.swift    # Metal surface, FPS, virtual gamepad
+│       └── InGameOverlayView.swift    # Pipeline loader, FPS HUD, virtual gamepad
 │
 ├── Models/
-│   └── GameEntry.swift                # Game model, TranslationStatus enum
+│   └── GameEntry.swift                # Hashable models, AppScreen navigation enum
 │
 ├── SteamSync/
-│   └── SteamLibraryManager.swift      # Steam Web API auth + library sync
+│   └── SteamLibraryManager.swift      # Timer-based simulated downloads + translations
 │
 ├── TranslationLayer/
-│   ├── AOTCompiler.swift              # PE → x86 disasm → ARM64 → Mach-O
-│   ├── WineDarwin.swift               # Single-process Wine, API table
-│   └── TranslationEngineManager.swift # Pipeline orchestrator
+│   ├── AOTCompiler.swift              # PE parser → x86 disasm → ARM64 → Mach-O
+│   ├── WineDarwin.swift               # Single-process Wine, threaded wineserver
+│   └── TranslationEngineManager.swift # Async 10-step pipeline + FPS simulation
 │
 ├── GraphicsTranslation/
-│   └── MoltenMetalInterop.swift       # Metal init, MoltenVK, DXVK loader
+│   └── MoltenMetalInterop.swift       # Metal init, MoltenVK bridge, DXVK loader
 │
 ├── GameContainers/
 │   └── SandboxDrive.swift             # Per-game WINEPREFIX in iOS sandbox
 │
 ├── ControllerInput/
-│   └── ControllerInputManager.swift   # GameController → XInput mapping
+│   └── ControllerInputManager.swift   # GameController → XInput mask mapping
 │
 ├── Assets.xcassets/
-├── Info.plist                         # iPad, landscape, Metal, controllers
+├── Info.plist                         # iPad-only, landscape, Metal, controllers
 └── SteamPad.entitlements              # Sandbox + network
 ```
 
@@ -129,21 +152,31 @@ SteamPad/
 
 ### Why AOT Instead of JIT?
 
-Apple blocks `mmap(RWX)` on sideloaded apps — meaning runtime JIT compilation (used by Box64, FEX, etc.) is impossible without a jailbreak. SteamPad solves this by doing **all binary translation at install time**:
+Apple blocks `mmap(RWX)` on sideloaded apps — runtime JIT is impossible without a jailbreak. SteamPad does **all binary translation at install time**:
 
 ```
 Download game → Parse PE → Disassemble x86 → Translate to ARM64 → Link as .dylib → Done.
 ```
 
-The resulting `.dylib` contains pure ARM64 machine code. To the iOS kernel, it's indistinguishable from any native library.
+The resulting `.dylib` is pure ARM64 machine code. To the iOS kernel, it's indistinguishable from any native library.
 
 ### Why Single-Process Wine?
 
-Standard Wine spawns `wineserver` as a child process via `fork()`. iPadOS prohibits this. SteamPad restructures Wine to run **entirely within one process** — `wineserver` becomes a background thread communicating via shared memory instead of Unix sockets.
+Standard Wine spawns `wineserver` via `fork()`. iPadOS prohibits child processes. SteamPad runs Wine **entirely within one process** — `wineserver` is a background thread using shared memory.
 
 ### Why DXVK + MoltenVK?
 
-This is the same proven stack used by **CrossOver**, **Whisky**, and Apple's own **Game Porting Toolkit** on macOS. Direct3D → Vulkan → Metal is battle-tested.
+Same proven stack used by **CrossOver**, **Whisky**, and Apple's **Game Porting Toolkit**. Direct3D → Vulkan → Metal is battle-tested.
+
+### Centralized State Management
+
+`AppState` manages the entire app lifecycle and screen routing:
+
+```swift
+Login → .dashboard → .inGame(game) → .dashboard (exit)
+```
+
+All managers (`SteamLibraryManager`, `TranslationEngineManager`, `ControllerInputManager`) are injected as `@EnvironmentObject` — no singletons, proper SwiftUI architecture.
 
 ---
 
@@ -155,7 +188,7 @@ This is the same proven stack used by **CrossOver**, **Whisky**, and Apple's own
 - iPad with Apple Silicon (A12+) running iPadOS 17+
 - [AltStore](https://altstore.io) or [SideStore](https://sidestore.io) for sideloading
 
-### Build
+### Build & Run
 
 ```bash
 # Clone
@@ -165,40 +198,46 @@ cd SteamPad
 # Open in Xcode
 open SteamPad.xcodeproj
 
-# Select your iPad as target → Build & Run
-# Or archive → Export IPA → Sideload via AltStore
+# Select iPad target → Build & Run
+# The demo mode works immediately — no Steam account required
+
+# For sideloading: Archive → Export IPA → AltStore
 ```
 
 ---
 
 ## ⚠️ Current Status
 
-> **This is an architectural prototype.** The UI, data models, and pipeline orchestration are fully implemented in Swift. The following components require native C/C++ open-source libraries to be cross-compiled for ARM64 Darwin and bundled as `.dylib` frameworks:
+> **Fully functional demo app.** All UI screens, navigation, animations, and simulated workflows are production-quality. The translation engines use placeholder implementations that need native C/C++ libraries for real game execution:
 
-| Component | Status | What's Needed |
-|-----------|--------|---------------|
-| SwiftUI Launcher | ✅ Complete | — |
-| Steam Library Sync | 🟡 Stubbed | Integrate SteamKit / DepotDownloader |
-| AOT Compiler | 🟡 Structure only | Integrate Capstone (disasm) + custom ARM64 codegen |
-| Wine Darwin | 🟡 Orchestrator only | Cross-compile Wine for ARM64 Darwin (single-process patch) |
-| DXVK | 🟡 Loader only | Cross-compile DXVK as ARM64 `.dylib` |
-| MoltenVK | 🟡 Loader only | Bundle [MoltenVK](https://github.com/KhronosGroup/MoltenVK) |
-| Controller Input | ✅ Complete | — |
-| Sandbox Manager | ✅ Complete | — |
+| Component | App Status | Real Game Support |
+|-----------|-----------|------------------|
+| SwiftUI Launcher (all screens) | ✅ **Production** | — |
+| Login → Dashboard → In-Game flow | ✅ **Working** | — |
+| Simulated downloads & translations | ✅ **Animated** | — |
+| Pipeline loading (10-step) | ✅ **Working** | — |
+| FPS counter & virtual gamepad | ✅ **Working** | — |
+| Controller input (MFi/Xbox/DS) | ✅ **Working** | — |
+| Sandbox container manager | ✅ **Working** | — |
+| AOT Compiler | 🟡 Scaffold | Needs Capstone + ARM64 codegen |
+| Wine Darwin | 🟡 Scaffold | Needs Wine cross-compile |
+| DXVK | 🟡 Scaffold | Needs DXVK cross-compile |
+| MoltenVK | 🟡 Scaffold | Bundle [MoltenVK](https://github.com/KhronosGroup/MoltenVK) |
+| Steam depot downloader | 🟡 Stubbed | Needs SteamKit integration |
 
 ---
 
 ## 🔮 Roadmap
 
-- [ ] Cross-compile Wine 9.0 for ARM64 Darwin (single-process fork)
+- [ ] Cross-compile Wine 9.0 for ARM64 Darwin (single-process patch)
 - [ ] Integrate MoltenVK framework
 - [ ] Build AOT compiler using Capstone + custom ARM64 backend
 - [ ] Cross-compile DXVK for ARM64
 - [ ] Implement Steam depot downloader
 - [ ] Add cloud save sync
-- [ ] Hybrid mode: local translation for light games + Moonlight streaming for AAA
-- [ ] Plugin system for community-contributed game patches
-- [ ] Apple Game Porting Toolkit (D3DMetal) integration if it comes to iPadOS
+- [ ] Hybrid mode: local translation + Moonlight streaming for AAA
+- [ ] Plugin system for community game patches
+- [ ] Apple Game Porting Toolkit (D3DMetal) integration
 
 ---
 
