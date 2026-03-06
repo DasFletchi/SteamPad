@@ -210,5 +210,5 @@ GPL 3.0 — Built on the shoulders of open-source giants:
 ---
 
 <p align="center">
-  <sub>Built with 🔥 by the SteamPad community</sub>
+  <sub>love y'all</sub>
 </p>
